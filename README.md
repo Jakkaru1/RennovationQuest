@@ -9,4 +9,10 @@ An 8-bit style progress page for our flat renovation: percent done, last job, up
   node build-pages.js
   ```
 
+`og-image.png` is the picture chat apps show when the link is shared. Redraw it with:
+
+  ```
+  powershell -ExecutionPolicy Bypass -File make-preview.ps1
+  ```
+
 On GitHub Pages the page is read-only; editing and photo upload work only in the Claude artifact.
