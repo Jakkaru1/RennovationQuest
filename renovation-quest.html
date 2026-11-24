@@ -93,6 +93,21 @@ ol.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap
 ol.log li{display:grid;grid-template-columns:auto 110px 1fr;gap:12px;align-items:center}
 ol.log .d{color:var(--muted);font-variant-numeric:tabular-nums}
 
+/* help button */
+.helpbar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:var(--paper);border:4px solid var(--ink);box-shadow:6px 6px 0 var(--hazard);padding:12px 16px;position:relative}
+.helpbar .hb-count{display:flex;flex-direction:column;gap:2px;min-width:0}
+.helpbar .hb-num{font-family:var(--pixel);font-size:20px;font-variant-numeric:tabular-nums}
+.helpbar .hb-lbl{font-size:18px;color:var(--muted)}
+.helpbar .hb-msg{font-size:20px;flex:1;min-width:160px;color:var(--blue)}
+.helpbtn{display:flex;align-items:center;gap:10px;font-size:12px;padding:12px 16px;background:var(--orange);color:#fff;position:relative}
+.helpbtn:hover{background:#f27a40}
+.helpbtn .sprite{transform-origin:70% 90%}
+.helpbtn.whack .sprite{animation:whack .25s steps(3)}
+@keyframes whack{0%{transform:rotate(0)}50%{transform:rotate(-35deg)}100%{transform:rotate(0)}}
+.plus1{position:absolute;font-family:var(--pixel);font-size:14px;color:var(--orange);text-shadow:2px 2px 0 var(--ink);pointer-events:none;animation:floatup .9s steps(9) forwards}
+@keyframes floatup{from{transform:translateY(0);opacity:1}to{transform:translateY(-48px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.helpbtn.whack .sprite,.plus1{animation:none}.plus1{display:none}}
+
 /* floor plan */
 .fp-wrap{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:22px;align-items:start}
 .fp{border:3px solid var(--ink);background:#d6d0c2;padding:8px;min-width:0}
@@ -147,7 +162,7 @@ footer{text-align:center;font-family:var(--pixel);font-size:9px;color:var(--mute
 <div class="hazard"></div>
 <main class="wrap" id="app"></main>
 <div class="hazard"></div>
-<script id="state" type="application/json">{"example":false,"name":"My House","tagline":"Level 1: The Great Renovation","percent":10,"started":"2025-08-04","target":"2027-09-13","last":{"title":"Wall between bathroom and WC knocked down","note":"Sander did it. Bathroom and WC are now one room.","date":"","icon":"hammer"},"upcoming":[{"title":"Electrical wiring, whole flat","when":"","icon":"plug"},{"title":"Water pipes in the kitchen and bathroom","when":"","icon":"water"},{"title":"Drywall walls: living room (left neighbour) and bedroom (right neighbour)","when":"","icon":"drywall"},{"title":"Drywall ceilings, whole flat","when":"","icon":"drywall"}],"workers":[{"name":"Sander","role":"Electrician, cleanup crew, floor pourer & wall breaker","quote":"","speed":3,"coffee":10,"noise":3,"icon":"worker","excuses":4},{"name":"Dibdo","role":"Cleanup crew & floor pourer","quote":"","speed":6,"coffee":5,"noise":6,"icon":"worker2","excuses":3},{"name":"Robo","role":"Electrician, wall finisher & cleanup crew","quote":"","speed":6,"coffee":5,"noise":6,"icon":"worker","excuses":3},{"name":"Jaro","role":"Best driver & car mechanic","quote":"","speed":10,"coffee":5,"noise":4,"icon":"car","excuses":2},{"name":"Sepo","role":"Demolition expert","quote":"","speed":3,"coffee":5,"noise":6,"icon":"worker2","excuses":1},{"name":"Mirec","role":"Plumber & radiator master","quote":"","speed":3,"coffee":5,"noise":2,"icon":"worker","excuses":7},{"name":"Marek","role":"All-rounder","quote":"","speed":6,"coffee":5,"noise":8,"icon":"worker2","excuses":9},{"name":"Frido","role":"Electrician & floor pourer","quote":"","speed":1,"coffee":10,"noise":9,"icon":"worker","excuses":1},{"name":"Domino","role":"Floor pourer","quote":"","speed":3,"coffee":5,"noise":5,"icon":"worker2","excuses":3},{"name":"Stefko","role":"Cleanup crew","quote":"","speed":5,"coffee":5,"noise":2,"icon":"worker","excuses":1},{"name":"Huro","role":"Electrician & designer","quote":"","speed":6,"coffee":5,"noise":8,"icon":"worker2","excuses":2}],"stats":{"coffees":99,"budget":15,"complaints":7,"dust":"EXTREME"},"log":[{"date":"","title":"Wall between bathroom and WC knocked down (Sander)","icon":"hammer"},{"date":"","title":"Bathroom rubble cleared out (Jaro, Robo, Sander)","icon":"dust"},{"date":"","title":"Door frames ripped out and bathroom demolished (Sepo)","icon":"hammer"},{"date":"","title":"Walls finished after chiselling out the radiator pipes (Robo)","icon":"roller"},{"date":"","title":"Radiators replaced in the whole flat (Mirec)","icon":"radiator"},{"date":"","title":"Floors poured in the bedroom and living room (Marek, Sander, Frido, Domino, Dibdo)","icon":"bricks"},{"date":"","title":"Junk cleared out of the flat and the cellar (Sander, Stefko, Dibdo)","icon":"dust"}],"photos":[],"rooms":[{"key":"living","name":"Living room","status":"doing","note":"Floor poured. Radiator replaced. Drywall wall to the left neighbour next."},{"key":"bedroom","name":"Bedroom","status":"doing","note":"Floor poured. Radiator replaced. Drywall wall to the right neighbour next."},{"key":"kitchen","name":"Kitchen","status":"doing","note":"Radiator replaced. Water pipes next."},{"key":"hall","name":"Hallway","status":"doing","note":"Door frames are gone."},{"key":"bath","name":"Bathroom + WC","status":"doing","note":"Demolished, wall to the WC knocked down, radiator replaced. Water pipes next."}]}</script>
+<script id="state" type="application/json">{"example":false,"name":"My House","tagline":"Level 1: The Great Renovation","percent":10,"started":"2025-08-04","target":"2027-09-13","last":{"title":"Wall between bathroom and WC knocked down","note":"Sander did it. Bathroom and WC are now one room.","date":"","icon":"hammer"},"upcoming":[{"title":"Electrical wiring, whole flat","when":"","icon":"plug"},{"title":"Water pipes in the kitchen and bathroom","when":"","icon":"water"},{"title":"Drywall walls: living room (left neighbour) and bedroom (right neighbour)","when":"","icon":"drywall"},{"title":"Drywall ceilings, whole flat","when":"","icon":"drywall"}],"workers":[{"name":"Sander","role":"Electrician, cleanup crew, floor pourer & wall breaker","quote":"","speed":3,"coffee":10,"noise":3,"icon":"worker","excuses":0},{"name":"Dibdo","role":"Cleanup crew & floor pourer","quote":"","speed":6,"coffee":5,"noise":6,"icon":"worker2","excuses":0},{"name":"Robo","role":"Electrician, wall finisher & cleanup crew","quote":"","speed":6,"coffee":5,"noise":6,"icon":"worker","excuses":0},{"name":"Jaro","role":"Best driver & car mechanic","quote":"","speed":10,"coffee":5,"noise":4,"icon":"car","excuses":0},{"name":"Sepo","role":"Demolition expert","quote":"","speed":3,"coffee":5,"noise":6,"icon":"worker2","excuses":0},{"name":"Mirec","role":"Plumber & radiator master","quote":"","speed":3,"coffee":5,"noise":2,"icon":"worker","excuses":0},{"name":"Marek","role":"All-rounder","quote":"","speed":6,"coffee":5,"noise":8,"icon":"worker2","excuses":0},{"name":"Frido","role":"Electrician & floor pourer","quote":"","speed":1,"coffee":10,"noise":9,"icon":"worker","excuses":0},{"name":"Domino","role":"Floor pourer","quote":"","speed":3,"coffee":5,"noise":5,"icon":"worker2","excuses":0},{"name":"Stefko","role":"Cleanup crew","quote":"","speed":5,"coffee":5,"noise":2,"icon":"worker","excuses":0},{"name":"Huro","role":"Electrician & designer","quote":"","speed":6,"coffee":5,"noise":8,"icon":"worker2","excuses":0}],"stats":{"coffees":99,"budget":15,"complaints":7,"dust":"EXTREME"},"log":[{"date":"","title":"Wall between bathroom and WC knocked down (Sander)","icon":"hammer"},{"date":"","title":"Bathroom rubble cleared out (Jaro, Robo, Sander)","icon":"dust"},{"date":"","title":"Door frames ripped out and bathroom demolished (Sepo)","icon":"hammer"},{"date":"","title":"Walls finished after chiselling out the radiator pipes (Robo)","icon":"roller"},{"date":"","title":"Radiators replaced in the whole flat (Mirec)","icon":"radiator"},{"date":"","title":"Floors poured in the bedroom and living room (Marek, Sander, Frido, Domino, Dibdo)","icon":"bricks"},{"date":"","title":"Junk cleared out of the flat and the cellar (Sander, Stefko, Dibdo)","icon":"dust"}],"photos":[],"rooms":[{"key":"living","name":"Living room","status":"doing","note":"Floor poured. Radiator replaced. Drywall wall to the left neighbour next."},{"key":"bedroom","name":"Bedroom","status":"doing","note":"Floor poured. Radiator replaced. Drywall wall to the right neighbour next."},{"key":"kitchen","name":"Kitchen","status":"doing","note":"Radiator replaced. Water pipes next."},{"key":"hall","name":"Hallway","status":"doing","note":"Door frames are gone."},{"key":"bath","name":"Bathroom + WC","status":"doing","note":"Demolished, wall to the WC knocked down, radiator replaced. Water pipes next."}]}</script>
 <script id="app-js">
 (() => {
 const PAL = {k:'#1f1c19',y:'#f2c230',o:'#e5652a',w:'#ffffff',s:'#e9b48a',b:'#2f5d8a',g:'#9a9e9b',d:'#5b5f5d',r:'#c23b2b',n:'#7a4b2a',e:'#4f8a3c',p:'#e98fa6'};
@@ -212,6 +227,40 @@ const DEFAULT_NAMES = {living:'Living room',bedroom:'Bedroom',kitchen:'Kitchen',
 let selRoom = null;
 
 let canEdit = false, artifactApi = null, assetsApi = null, busy = false;
+
+/* "Help the crew" clicks. Shared through the artifact's database when it is available
+   (each viewer stores their own count at cheers/<their id>; the page adds them up);
+   otherwise counted in this browser only. */
+const HELP_LINES = ["You held the ladder.","You found the missing screw.","You brought the crew a beer.","You swept one (1) grain of dust.","Moral support delivered.","You pointed at the wall. Very helpful.","You said 'that looks level'.","You fetched the wrong drill bit. Thanks anyway.","Sander salutes you.","Frido is slightly faster now. Slightly.","You held the torch. Wrong direction, but still.","You told Jaro where to park.","The cat approves of your effort.","You carried one tile. Respect."];
+let helpMine = 0, helpSaved = 0, helpDbMine = 0, helpTotal = null, helpDb = null, helpMeId = null, helpWriting = false, helpTimer = null, helpMsg = '';
+try { helpMine = num(localStorage.getItem('rq-help'), 0); } catch(e) {}
+function helpShown(){ return helpTotal == null ? helpMine : helpTotal - helpDbMine + helpMine; }
+function updateHelp(){
+  const n = document.getElementById('hb-num'), l = document.getElementById('hb-lbl'), m = document.getElementById('hb-msg');
+  if (n) n.textContent = helpShown().toLocaleString();
+  if (l) l.textContent = helpTotal == null ? 'helping clicks (this browser)' : `helping clicks from everyone · ${helpMine.toLocaleString()} yours`;
+  if (m) m.textContent = helpMsg;
+}
+async function flushHelp(){
+  if (!helpDb || !helpMeId || helpWriting || helpMine === helpSaved) return;
+  helpWriting = true; const v = helpMine;
+  try { await helpDb.collection('cheers').doc(helpMeId).set({ n: v }); helpSaved = v; }
+  catch(e) { /* keep counting locally */ }
+  helpWriting = false;
+  if (helpMine !== helpSaved) { clearTimeout(helpTimer); helpTimer = setTimeout(flushHelp, 800); }
+}
+function helpClick(ev){
+  helpMine++;
+  try { localStorage.setItem('rq-help', String(helpMine)); } catch(e) {}
+  helpMsg = HELP_LINES[Math.floor(Math.random() * HELP_LINES.length)];
+  updateHelp();
+  const b = ev.currentTarget; b.classList.remove('whack'); void b.offsetWidth; b.classList.add('whack');
+  const bar = b.closest('.helpbar'), r = bar.getBoundingClientRect(), br = b.getBoundingClientRect();
+  const p = document.createElement('span'); p.className = 'plus1'; p.textContent = '+1';
+  p.style.left = (br.left - r.left + br.width/2 - 14 + (Math.random()*30-15)) + 'px'; p.style.top = (br.top - r.top - 6) + 'px';
+  bar.appendChild(p); setTimeout(() => p.remove(), 950);
+  clearTimeout(helpTimer); helpTimer = setTimeout(flushHelp, 800);
+}
 const app = document.getElementById('app');
 
 function mood(p){
@@ -319,6 +368,11 @@ function render(){
   app.innerHTML = `
     ${s.example ? `<div class="banner">${sprite('dust',3)}<span>This page is showing example content.${canEdit?' Press <b>Edit site</b> to make it yours.':' The owner will fill in the real story soon.'}</span></div>`:''}
     ${canEdit ? `<div class="toolbar"><button type="button" id="btn-edit">Edit site</button><button type="button" class="ghost" id="btn-done" ${s.upcoming.length?'':'disabled'}>Job done! Next quest</button><span class="hint">Only you see these buttons.</span></div>`:''}
+    <section class="helpbar" aria-label="Help the crew">
+      <button type="button" class="helpbtn" id="btn-help">${sprite('hammer',3)}<span>HELP THE CREW +1</span></button>
+      <div class="hb-count"><span class="hb-num" id="hb-num" aria-live="polite">${helpShown().toLocaleString()}</span><span class="hb-lbl" id="hb-lbl"></span></div>
+      <span class="hb-msg" id="hb-msg">${esc(helpMsg || 'Can’t lift a drywall board? Click here instead.')}</span>
+    </section>
     <section class="hud" aria-label="Progress">
       <div class="hud-top">
         <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
@@ -414,6 +468,8 @@ function bind(){
     const pick = () => { const k = el.dataset.room; app.querySelectorAll('[data-room]').forEach(x => x.classList.toggle('sel', x.dataset.room === k)); selRoom = k; };
     el.addEventListener('click', pick); el.addEventListener('mouseenter', pick);
   });
+  document.getElementById('btn-help')?.addEventListener('click', helpClick);
+  updateHelp();
   document.getElementById('btn-edit')?.addEventListener('click', openEditor);
   document.getElementById('btn-done')?.addEventListener('click', () => {
     const n = structuredClone(state); const q = n.upcoming.shift(); if (!q) return;
@@ -510,8 +566,20 @@ render();
 (async () => {
   if (!window.claude?.use) return;
   try {
-    const [user, art, assets] = await Promise.all([claude.use('user'), claude.use('artifact'), claude.use('assets')]);
+    const [user, art, assets, db] = await Promise.all([claude.use('user'), claude.use('artifact'), claude.use('assets'), claude.use('db')]);
     artifactApi = art; assetsApi = assets;
+    const myId = db && user ? await user.id() : null;
+    if (db && myId) {
+      helpDb = db; helpMeId = myId;
+      let first = true;
+      db.collection('cheers').onSnapshot(snap => {
+        let total = 0, mine = 0;
+        snap.docs.forEach(d => { const v = Math.max(0, Math.floor(num(d.data()?.n))); total += v; if (d.id === myId) mine = v; });
+        helpTotal = total; helpDbMine = mine;
+        if (first) { first = false; helpSaved = mine; if (mine > helpMine) helpMine = mine; else if (helpMine > mine) { clearTimeout(helpTimer); helpTimer = setTimeout(flushHelp, 300); } }
+        updateHelp();
+      }, () => { helpTotal = null; updateHelp(); });
+    }
     canEdit = !!art && ((await user?.canEdit()) ?? false);
     if (canEdit) render();
   } catch(e) { /* read-only view */ }
