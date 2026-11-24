@@ -1,0 +1,520 @@
+<title>Renovation Quest</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
+<style id="page-css">
+/* Layout: one 8-bit "game screen" column — HUD hero with level bar, then quest panels in a 2-col grid that stacks on phones. Single committed light "construction site" look. */
+:root{
+  --concrete:#e2ddd0; --paper:#f8f5ec; --ink:#1f1c19; --muted:#6a6459;
+  --hazard:#f2c230; --orange:#e5652a; --blue:#2f5d8a; --green:#4f8a3c; --red:#c23b2b;
+  --pixel:"Press Start 2P", ui-monospace, monospace;
+  --body:"VT323", ui-monospace, "Courier New", monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--concrete);
+  background-image:linear-gradient(rgba(31,28,25,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(31,28,25,.05) 1px,transparent 1px);
+  background-size:16px 16px;
+  color:var(--ink); font-family:var(--body); font-size:21px; line-height:1.2;
+}
+.hazard{height:14px;background:repeating-linear-gradient(-45deg,var(--hazard) 0 14px,var(--ink) 14px 28px)}
+.wrap{max-width:1060px;margin:0 auto;padding-block:28px 40px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:24px}
+h1,h2,h3,.px{font-family:var(--pixel);font-weight:400;text-wrap:balance;margin:0}
+h1{font-size:clamp(18px,4.4vw,34px);line-height:1.35}
+h2{font-size:13px;letter-spacing:.06em;display:flex;align-items:center;gap:10px}
+h3{font-size:11px;line-height:1.5}
+p{margin:0}
+.sprite{display:block;image-rendering:pixelated;flex:none}
+.panel{background:var(--paper);border:4px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.muted{color:var(--muted)}
+.tag{font-family:var(--pixel);font-size:9px;letter-spacing:.08em;background:var(--ink);color:var(--hazard);padding:5px 7px;align-self:flex-start}
+
+/* HUD */
+.hud{background:var(--ink);color:var(--paper);border:4px solid var(--ink);box-shadow:6px 6px 0 var(--orange);padding:22px;display:flex;flex-direction:column;gap:18px}
+.hud-top{display:flex;gap:18px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.hud .sub{color:var(--hazard);font-size:24px}
+.big{font-family:var(--pixel);font-size:clamp(40px,10vw,76px);color:var(--hazard);line-height:1;font-variant-numeric:tabular-nums;text-shadow:4px 4px 0 var(--orange)}
+.big small{font-size:.4em;color:var(--paper);text-shadow:none}
+.lvl{position:relative;padding-top:44px}
+.bar{display:grid;grid-template-columns:repeat(20,1fr);gap:3px;border:3px solid var(--paper);padding:3px;height:30px}
+.bar i{background:#3a352f}
+.bar i.on{background:var(--hazard)}
+.bar i.on:nth-child(4n){background:var(--orange)}
+.walker{position:absolute;top:0;transform:translateX(-50%);transition:left .6s steps(8)}
+@media (prefers-reduced-motion:no-preference){.walker .sprite{animation:bob .5s steps(2) infinite}}
+@keyframes bob{50%{transform:translateY(-3px)}}
+.mood{font-size:24px}
+.hud-meta{display:flex;flex-wrap:wrap;gap:8px 28px;font-size:20px;color:#cfc8b8}
+.hud-meta b{color:var(--paper);font-weight:400}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.stat{background:var(--paper);border:4px solid var(--ink);padding:14px;display:flex;gap:12px;align-items:center;min-width:0}
+.stat .v{font-family:var(--pixel);font-size:16px;font-variant-numeric:tabular-nums}
+.stat .l{font-size:18px;color:var(--muted)}
+.meter{height:10px;border:2px solid var(--ink);margin-top:6px;position:relative;overflow:hidden}
+.meter span{position:absolute;inset:0 auto 0 0;background:var(--green)}
+.meter.over span{background:var(--red)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.job{display:flex;gap:16px;align-items:flex-start}
+.job .t{font-size:26px}
+.done-stamp{font-family:var(--pixel);font-size:10px;color:var(--green);border:3px solid var(--green);padding:5px 7px;transform:rotate(-4deg);align-self:flex-start}
+ul.quests{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+ul.quests li{display:flex;gap:12px;align-items:center;border-bottom:2px dashed #cdc6b6;padding-bottom:10px}
+ul.quests li:last-child{border:0;padding:0}
+.q-when{margin-left:auto;font-size:18px;color:var(--muted);white-space:nowrap}
+.first .q-title{color:var(--orange)}
+
+/* workers */
+.workers{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.worker{border:3px solid var(--ink);padding:14px;display:flex;flex-direction:column;gap:10px;background:#fff;position:relative}
+.worker.mvp{background:#fff7d6}
+.worker .head{display:flex;gap:12px;align-items:center}
+.statrow{display:grid;grid-template-columns:70px 1fr;align-items:center;gap:8px;font-size:18px}
+.pips{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;height:10px}
+.pips i{background:#ddd6c6}.pips i.on{background:var(--blue)}
+.quote{font-size:19px;color:var(--muted)}
+.mvp-badge{position:absolute;top:-14px;right:10px;font-family:var(--pixel);font-size:8px;background:var(--orange);color:#fff;padding:5px 6px;border:2px solid var(--ink)}
+
+/* photos */
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px}
+.polaroid{background:#fff;border:3px solid var(--ink);padding:8px 8px 10px;display:flex;flex-direction:column;gap:6px;margin:0}
+.polaroid:nth-child(odd){transform:rotate(-1.2deg)}.polaroid:nth-child(even){transform:rotate(1deg)}
+.polaroid img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#ddd}
+.polaroid figcaption{font-size:19px;display:flex;justify-content:space-between;gap:8px}
+.empty{display:flex;gap:16px;align-items:center;border:3px dashed #b9b1a0;padding:18px}
+
+/* log */
+ol.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+ol.log li{display:grid;grid-template-columns:auto 110px 1fr;gap:12px;align-items:center}
+ol.log .d{color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* floor plan */
+.fp-wrap{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:22px;align-items:start}
+.fp{border:3px solid var(--ink);background:#d6d0c2;padding:8px;min-width:0}
+.fp svg{width:100%;height:auto;display:block}
+.fp .rname{font-family:var(--pixel);font-size:2.3px;fill:var(--ink)}
+.fp .rarea{font-family:var(--body);font-size:3.8px;fill:var(--ink)}
+.fp .rbadge{font-family:var(--pixel);font-size:1.7px}
+.fp .entry{font-family:var(--pixel);font-size:1.9px;fill:var(--ink)}
+.fp g.room{cursor:default}
+.fp g.room:hover rect.fill,.fp g.room:hover path.fill{filter:brightness(1.06)}
+.fp g.room.sel rect.fill,.fp g.room.sel path.fill{stroke:var(--orange);stroke-width:1}
+ul.rooms{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+ul.rooms li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;border-bottom:2px dashed #cdc6b6;padding-bottom:8px}
+ul.rooms li:last-child{border:0}
+ul.rooms li.sel .rn{color:var(--orange)}
+ul.rooms .rn{font-size:23px}
+ul.rooms .ra{font-size:18px;color:var(--muted);font-variant-numeric:tabular-nums}
+ul.rooms .rnote{grid-column:1/-1;font-size:18px;color:var(--muted)}
+.chip{font-family:var(--pixel);font-size:8px;letter-spacing:.04em;padding:5px 6px;border:2px solid var(--ink);white-space:nowrap}
+.chip.done{background:var(--green);color:#fff}.chip.doing{background:var(--hazard)}.chip.todo{background:#e5e0d4}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:18px;align-items:center}
+.legend i{display:inline-block;width:14px;height:14px;border:2px solid var(--ink);vertical-align:-2px;margin-right:5px}
+.area-done{display:flex;flex-direction:column;gap:6px}
+.area-done .meter{height:14px}
+.room-ed{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.9fr) minmax(0,1.5fr);gap:8px;align-items:end}
+
+/* buttons & forms */
+button,.btn{font-family:var(--pixel);font-size:10px;letter-spacing:.04em;background:var(--hazard);color:var(--ink);border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:9px 12px;cursor:pointer}
+button:hover{background:#ffd54d}
+button:active{transform:translate(3px,3px);box-shadow:none}
+button.ghost{background:var(--paper)}
+button.danger{background:#f2b8ad}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+button[disabled]{opacity:.5;cursor:wait}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.banner{background:var(--hazard);border:3px solid var(--ink);padding:10px 14px;font-size:20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.overlay{position:fixed;inset:0;background:rgba(31,28,25,.6);z-index:20;display:flex;justify-content:center;align-items:flex-start;overflow:auto;
+  padding:max(20px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
+.editor{width:min(760px,100%)}
+.editor label{display:flex;flex-direction:column;gap:4px;font-size:18px;min-width:0}
+.editor input,.editor textarea,.editor select{font-family:var(--body);font-size:20px;border:3px solid var(--ink);background:#fff;color:var(--ink);padding:6px 8px;width:100%}
+.editor textarea{min-height:110px;resize:vertical}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.hint{font-size:17px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--hazard);font-family:var(--pixel);font-size:10px;padding:12px 16px;z-index:30;border:3px solid var(--hazard)}
+footer{text-align:center;font-family:var(--pixel);font-size:9px;color:var(--muted);line-height:2}
+
+@media (max-width:820px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2,.fp-wrap{grid-template-columns:1fr}}
+@media (max-width:560px){.room-ed{grid-template-columns:1fr 1fr}.room-ed label:last-child{grid-column:1/-1}}
+@media (max-width:420px){ol.log li{grid-template-columns:auto 1fr}ol.log .d{grid-column:2}}
+</style>
+<div class="hazard"></div>
+<main class="wrap" id="app"></main>
+<div class="hazard"></div>
+<script id="state" type="application/json">{"example":false,"name":"My House","tagline":"Level 1: The Great Renovation","percent":10,"started":"2025-08-04","target":"2027-09-13","last":{"title":"Wall between bathroom and WC knocked down","note":"Sander did it. Bathroom and WC are now one room.","date":"","icon":"hammer"},"upcoming":[{"title":"Electrical wiring, whole flat","when":"","icon":"plug"},{"title":"Water pipes in the kitchen and bathroom","when":"","icon":"water"},{"title":"Drywall walls: living room (left neighbour) and bedroom (right neighbour)","when":"","icon":"drywall"},{"title":"Drywall ceilings, whole flat","when":"","icon":"drywall"}],"workers":[{"name":"Sander","role":"Cleanup crew, floor pourer & wall breaker","quote":"","speed":5,"coffee":10,"noise":5,"icon":"worker"},{"name":"Dibdo","role":"Cleanup crew & floor pourer","quote":"","speed":5,"coffee":5,"noise":5,"icon":"worker2"},{"name":"Robo","role":"Wall finisher & cleanup crew","quote":"","speed":5,"coffee":5,"noise":5,"icon":"worker"},{"name":"Jaro","role":"Best driver & car mechanic","quote":"","speed":5,"coffee":5,"noise":5,"icon":"car"},{"name":"Sepo","role":"Demolition expert","quote":"","speed":5,"coffee":5,"noise":5,"icon":"worker2"},{"name":"Mirec","role":"Radiator master","quote":"","speed":5,"coffee":5,"noise":5,"icon":"worker"},{"name":"Marek","role":"Floor pourer","quote":"","speed":5,"coffee":5,"noise":5,"icon":"worker2"},{"name":"Frido","role":"Floor pourer","quote":"","speed":5,"coffee":10,"noise":5,"icon":"worker"},{"name":"Domino","role":"Floor pourer","quote":"","speed":5,"coffee":5,"noise":5,"icon":"worker2"},{"name":"Stefko","role":"Cleanup crew","quote":"","speed":5,"coffee":5,"noise":5,"icon":"worker"},{"name":"Huro","role":"Crew","quote":"","speed":5,"coffee":5,"noise":5,"icon":"worker2"}],"stats":{"coffees":99,"budget":15,"complaints":7,"dust":"EXTREME"},"log":[{"date":"","title":"Wall between bathroom and WC knocked down (Sander)","icon":"hammer"},{"date":"","title":"Bathroom rubble cleared out (Jaro, Robo, Sander)","icon":"dust"},{"date":"","title":"Door frames ripped out and bathroom demolished (Sepo)","icon":"hammer"},{"date":"","title":"Walls finished after chiselling out the radiator pipes (Robo)","icon":"roller"},{"date":"","title":"Radiators replaced in the whole flat (Mirec)","icon":"radiator"},{"date":"","title":"Floors poured in the bedroom and living room (Marek, Sander, Frido, Domino, Dibdo)","icon":"bricks"},{"date":"","title":"Junk cleared out of the flat and the cellar (Sander, Stefko, Dibdo)","icon":"dust"}],"photos":[],"rooms":[{"key":"living","name":"Living room","status":"doing","note":"Floor poured. Radiator replaced. Drywall wall to the left neighbour next."},{"key":"bedroom","name":"Bedroom","status":"doing","note":"Floor poured. Radiator replaced. Drywall wall to the right neighbour next."},{"key":"kitchen","name":"Kitchen","status":"doing","note":"Radiator replaced. Water pipes next."},{"key":"hall","name":"Hallway","status":"doing","note":"Door frames are gone."},{"key":"bath","name":"Bathroom + WC","status":"doing","note":"Demolished, wall to the WC knocked down, radiator replaced. Water pipes next."}]}</script>
+<script id="app-js">
+(() => {
+const PAL = {k:'#1f1c19',y:'#f2c230',o:'#e5652a',w:'#ffffff',s:'#e9b48a',b:'#2f5d8a',g:'#9a9e9b',d:'#5b5f5d',r:'#c23b2b',n:'#7a4b2a',e:'#4f8a3c',p:'#e98fa6'};
+const SPR = {
+  worker:["....kkkk....","...kyyyyk...","..kyyyyyyk..",".kkkkkkkkkk.","..kssssssk..","..kskssksk..","..kssssssk..","...kskksk...","..kooooook..",".kooookoook.",".ksoooooosk.","..kbbbbbbk..","..kbbkkbbk..","..kkk..kkk.."],
+  worker2:["....kkkk....","...koooook..","..koooooook.",".kkkkkkkkkk.","..kssssssk..","..kskssksk..","..ksnnnnsk..","...knnnnk...","..kbbbbbbk..",".kbbbbybbbk.",".ksbbbbbbsk.","..kddddddk..","..kddkkddk..","..kkk..kkk.."],
+  cat:[".k........k.","kgk......kgk","kggkkkkkkggk","kggggggggggk","kgkekggkekgk","kgggggggggk.","kgggkpkgggk.",".kggggggggk.","..kggggggk..",".kgkkggkkgk.","..k..kk..k.."],
+  hammer:["..kkkkkk....",".kddddddk...",".kdwddddk...",".kddddddk...","..kkknkk....","....knk.....","....knk.....","....knk.....","....knk.....","....knk.....","....kkk....."],
+  roller:[".kkkkkkkkk..",".kooooooook.",".kowoooooook",".kooooooook.",".kkkkkkkkk..",".....k......","..kkkk......","..k.........","..k.........",".knnk.......",".knnk.......",".kkkk......."],
+  toilet:[".kkkk.......",".kwwk.......",".kwwk.......",".kwwkkkkkk..",".kwwwwwwwwk.","..kwwbbwwk..","...kwwwwk...","....kwwk....","...kwwwwk...","...kkkkkk..."],
+  bricks:["kkkkkkkkkkkk","krrrkrrrrkrk","kkkkkkkkkkkk","krkrrrrkrrrk","kkkkkkkkkkkk","krrrkrrrrkrk","kkkkkkkkkkkk"],
+  plug:[".....kkkk",".....kyyk","....kyyk.","...kyyk..","..kyyyyk.","....kyk..","...kyk...","..kyk....","..kk....."],
+  coffee:["...k..k....","..k..k.....","...........",".kkkkkkkk..",".kwwwwwwkkk",".kwnnnnwk.k",".kwnnnnwk.k",".kwwwwwwkkk","..kwwwwk...","...kkkk...."],
+  money:["....kkk....","...kynk....","....kk.....","..kkyykk...",".kyyyyyyk..","kyyykkyyyk.","kyykyyyyyk.","kyyykkyyyk.","kyyyyykyyk.","kyyykkyyyk.",".kyyyyyyk..","..kkkkkk..."],
+  angry:["..kkkkkk..",".kssssssk.","kskksskksk","kssssssssk","kssssssssk","ksskkkkssk","kskssssksk",".kssssssk.","..kkkkkk.."],
+  dust:["..g...g.....",".ggg.ggg..g.","ggggggggg...",".gggggggggg.","gggdgggggggg",".ggggggdgg..","..gggggggg..","...g...g....",],
+  camera:["...kkk......","kkkkkkkkkkk.","kdddddddddk.","kddkkkkdydk.","kdkwbbwkddk.","kdkbbbbkddk.","kdkbbbbkddk.","kddkkkkdddk.","kdddddddddk.","kkkkkkkkkkk."],
+  beer:["..kkkkkk....",".kwwwwwwk...","kwwwwwwwwk..","kkkkkkkkkk..","kyyyyyyyykk.","kywyyyyyyk.k","kyyyyyyyyk.k","kywyyyyyyk.k","kyyyyyyyykk.","kyyyyyyyyk..","kkkkkkkkkk.."],
+  water:["....k....","...kbk...","..kbbbk..",".kbbbbbk.","kbbwbbbbk","kbwbbbbbk","kbbbbbbbk",".kbbbbbk.","..kkkkk.."],
+  drywall:["kkkkkkkkkkk","kwwwwkwwwwk","kwdwwkwwdwk","kwwwwkwwwwk","kwwwwkwwwwk","kwwwwkwwwwk","kwdwwkwwdwk","kwwwwkwwwwk","kkkkkkkkkkk"],
+  radiator:[".k.k.k.k.k..","kwkwkwkwkwk.","kwkwkwkwkwk.","kwkwkwkwkwkk","kwkwkwkwkwk.","kwkwkwkwkwk.","kkkkkkkkkkk.",".k.......k.."],
+  car:["...kkkkkk.....","..kbwkbkbwk...",".kkkkkkkkkkkk.","koooooooooooyk","kooooooooooook","kkokkkkkkkokkk",".kgk......kgk.","..k........k.."],
+  trophy:[".kkkkkkkk.","kkyyyyyykk","kykyywyyky","kkyyyyyykk",".kyyyyyyk.","..kyyyyk..","...kyyk...","....kk....","...kyyk...","..kkkkkk.."]
+};
+const ICONS = ['hammer','roller','toilet','bricks','plug','water','drywall','radiator','beer','money','trophy','camera','dust','car','worker','worker2','cat'];
+function sprite(name, px, cls){
+  const rows = SPR[name] || SPR.hammer, w = Math.max(...rows.map(r=>r.length)), h = rows.length;
+  let r = '';
+  rows.forEach((row,y)=>{for(let x=0;x<row.length;x++){const c=PAL[row[x]];if(c) r+=`<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${c}"/>`;}});
+  return `<svg class="sprite ${cls||''}" viewBox="0 0 ${w} ${h}" width="${w*px}" height="${h*px}" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;
+}
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = (v, d=0) => { const n = Number(v); return Number.isFinite(n) ? n : d; };
+const clamp = (n,a,b) => Math.min(b, Math.max(a, n));
+const safeIcon = v => SPR[v] ? v : 'hammer';
+const today = () => new Date().toISOString().slice(0,10);
+function fmtDate(s){ const d = new Date(s+'T12:00:00'); return isNaN(d) ? esc(s) : d.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}); }
+function daysBetween(a,b){ const x=new Date(a+'T12:00:00'), y=new Date(b+'T12:00:00'); return isNaN(x)||isNaN(y) ? null : Math.round((y-x)/864e5); }
+
+let state;
+try { state = JSON.parse(document.getElementById('state').textContent); } catch(e) { state = {}; }
+state.upcoming ||= []; state.workers ||= []; state.log ||= []; state.photos ||= []; state.stats ||= {}; state.last ||= {};
+
+/* Floor plan geometry, traced from the flat's plan (units ≈ 10 cm). Areas are the plan's own figures. */
+const ROOM_GEO = {
+  living:  {area:18.80, shape:{r:[2,65,57,57]},  icon:'roller', lx:30.5, ly:88},
+  bedroom: {area:14.91, shape:{r:[60,65,46,57]}, icon:'cat',    lx:83,   ly:88},
+  kitchen: {area:10.60, shape:{r:[2,2,34,57]},   icon:'beer',   lx:19,   ly:24},
+  hall:    {area:9.12,  shape:{p:'M37 43H68V2H88V59H37Z'}, icon:'hammer', lx:78, ly:24},
+  bath:    {area:5.12,  shape:{r:[42,2,26,40]},  icon:'toilet', lx:55,   ly:22}  /* bathroom 3.65 + WC 1.47, wall knocked through */
+};
+const ROOM_ORDER = ['living','bedroom','kitchen','hall','bath'];
+const STATUS = {todo:'NOT STARTED', doing:'IN PROGRESS', done:'DONE'};
+const DEFAULT_NAMES = {living:'Living room',bedroom:'Bedroom',kitchen:'Kitchen',hall:'Hallway',bath:'Bathroom + WC'};
+(() => {
+  const have = Array.isArray(state.rooms) ? state.rooms : [];
+  state.rooms = ROOM_ORDER.map(k => {
+    const r = have.find(x => x && x.key === k) || {};
+    return { key:k, name:String(r.name || DEFAULT_NAMES[k]), status:STATUS[r.status] ? r.status : 'todo', note:String(r.note || '') };
+  });
+})();
+let selRoom = null;
+
+let canEdit = false, artifactApi = null, assetsApi = null, busy = false;
+const app = document.getElementById('app');
+
+function mood(p){
+  if (p < 15) return "Demolition phase. Everything is dust.";
+  if (p < 35) return "Walls are coming back. Mostly vertical.";
+  if (p < 60) return "It looks worse before it looks better. Right?";
+  if (p < 80) return "It almost looks like a house now!";
+  if (p < 100) return "Final boss: the tiny details.";
+  return "VICTORY! Time to throw a party.";
+}
+
+function spriteAt(name, x, y, size){
+  const rows = SPR[name]; if (!rows) return '';
+  const w = Math.max(...rows.map(r=>r.length)), h = rows.length, sc = size / Math.max(w,h);
+  let r = '';
+  rows.forEach((row,yy)=>{for(let xx=0;xx<row.length;xx++){const c=PAL[row[xx]];if(c) r+=`<rect x="${xx}" y="${yy}" width="1.02" height="1.02" fill="${c}"/>`;}});
+  return `<svg x="${x - w*sc/2}" y="${y}" width="${w*sc}" height="${h*sc}" viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges">${r}</svg>`;
+}
+
+function floorPlan(s){
+  const fills = {done:'url(#fp-done)', doing:'url(#fp-doing)', todo:'url(#fp-todo)'};
+  const badgeBg = {done:'#4f8a3c', doing:'#1f1c19', todo:'#6a6459'};
+  const badgeFg = {done:'#ffffff', doing:'#f2c230', todo:'#f8f5ec'};
+  const short = {done:'DONE', doing:'WIP', todo:'TODO'};
+  const rooms = s.rooms.map(rm => {
+    const g = ROOM_GEO[rm.key], sh = g.shape;
+    const shape = sh.r ? `<rect class="fill" x="${sh.r[0]}" y="${sh.r[1]}" width="${sh.r[2]}" height="${sh.r[3]}" fill="${fills[rm.status]}"/>`
+                       : `<path class="fill" d="${sh.p}" fill="${fills[rm.status]}"/>`;
+    const name = rm.name.length > 14 ? rm.name.slice(0,13) + '…' : rm.name;
+    const small = rm.key === 'wc';
+    const bw = short[rm.status].length * 1.75 + 1.6;
+    return `<g class="room ${selRoom===rm.key?'sel':''}" data-room="${rm.key}" role="img" aria-label="${esc(rm.name)}, ${g.area} square metres, ${STATUS[rm.status].toLowerCase()}">
+      <title>${esc(rm.name)} · ${g.area.toFixed(2)} m² · ${STATUS[rm.status]}${rm.note?' · '+esc(rm.note):''}</title>
+      ${shape}
+      ${small ? `<text class="rname" x="${g.lx - 8}" y="${g.ly + 1.4}" text-anchor="middle">${esc(name.slice(0,4))}</text>
+                 <rect x="${g.lx}" y="${g.ly - 1.6}" width="${bw}" height="3.4" fill="${badgeBg[rm.status]}"/>
+                 <text class="rbadge" x="${g.lx + bw/2}" y="${g.ly + 0.9}" text-anchor="middle" fill="${badgeFg[rm.status]}">${short[rm.status]}</text>`
+      : `${g.icon ? spriteAt(g.icon, g.lx, g.ly - 13, 8) : ''}
+         <text class="rname" x="${g.lx}" y="${g.ly - 1}" text-anchor="middle">${esc(name)}</text>
+         <text class="rarea" x="${g.lx}" y="${g.ly + 3.6}" text-anchor="middle">${g.area.toFixed(2)} m²</text>
+         <rect x="${g.lx - bw/2}" y="${g.ly + 5.6}" width="${bw}" height="3.4" fill="${badgeBg[rm.status]}"/>
+         <text class="rbadge" x="${g.lx}" y="${g.ly + 8.1}" text-anchor="middle" fill="${badgeFg[rm.status]}">${short[rm.status]}</text>`}
+    </g>`;
+  }).join('');
+  const total = s.rooms.reduce((a,r)=>a+ROOM_GEO[r.key].area,0);
+  const done = s.rooms.filter(r=>r.status==='done').reduce((a,r)=>a+ROOM_GEO[r.key].area,0);
+  const doing = s.rooms.filter(r=>r.status==='doing').reduce((a,r)=>a+ROOM_GEO[r.key].area,0);
+  const nDone = s.rooms.filter(r=>r.status==='done').length;
+  return `
+  <section class="panel" aria-label="Floor plan">
+    <h2>${sprite('bricks',3)} WORLD MAP</h2>
+    <div class="fp-wrap">
+      <div class="fp">
+        <svg viewBox="-1 -1 110 126" shape-rendering="crispEdges">
+          <defs>
+            <pattern id="fp-doing" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="4" fill="#f2c230"/><rect width="1.6" height="4" fill="#e5652a"/></pattern>
+            <pattern id="fp-done" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#bcd9a8"/><rect width="1" height="1" fill="#9cc488"/></pattern>
+            <pattern id="fp-todo" width="3" height="3" patternUnits="userSpaceOnUse"><rect width="3" height="3" fill="#f3efe4"/><rect width=".7" height=".7" fill="#bdb6a6"/></pattern>
+          </defs>
+          <rect x="0" y="0" width="90" height="63" fill="#1f1c19"/>
+          <rect x="0" y="61" width="108" height="63" fill="#1f1c19"/>
+          <rect x="37.5" y="2" width="4" height="40.5" fill="#5b5f5d"/>
+          ${rooms}
+          <rect x="88" y="45" width="2" height="9" fill="#f8f5ec"/>
+          <text class="entry" x="99" y="51" text-anchor="middle">◀IN</text>
+        </svg>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+        <div class="area-done">
+          <span><b style="font-family:var(--pixel);font-size:12px">${done.toFixed(1)} m²</b> of ${total.toFixed(2)} m² finished · ${nDone} of ${s.rooms.length} rooms</span>
+          <div class="meter" aria-hidden="true"><span style="width:${(done/total*100).toFixed(1)}%"></span><span style="left:${(done/total*100).toFixed(1)}%;width:${(doing/total*100).toFixed(1)}%;background:var(--hazard)"></span></div>
+        </div>
+        <ul class="rooms">${s.rooms.map(r=>`<li class="${selRoom===r.key?'sel':''}" data-room="${r.key}">
+          <span class="rn">${esc(r.name)} <span class="ra">${ROOM_GEO[r.key].area.toFixed(2)} m²</span></span>
+          <span class="chip ${r.status}">${STATUS[r.status]}</span>
+          ${r.note?`<span class="rnote">${esc(r.note)}</span>`:''}</li>`).join('')}</ul>
+        <div class="legend"><span><i style="background:#bcd9a8"></i>Done</span><span><i style="background:repeating-linear-gradient(45deg,#f2c230 0 4px,#e5652a 4px 6px)"></i>In progress</span><span><i style="background:#f3efe4"></i>Not started</span></div>
+      </div>
+    </div>
+  </section>`;
+}
+
+function render(){
+  const s = state, p = clamp(Math.round(num(s.percent)), 0, 100);
+  const on = Math.round(p/5);
+  const days = daysBetween(s.started, today());
+  const left = daysBetween(today(), s.target);
+  const realistic = (() => { const tot = daysBetween(s.started, s.target); if (tot==null) return null; const d = new Date(s.started+'T12:00:00'); d.setDate(d.getDate()+Math.round(tot*1.4)); return d.toISOString().slice(0,10); })();
+  const st = s.stats, budget = num(st.budget);
+  const workers = s.workers.map((w,i) => `
+    <article class="worker ${i===0?'mvp':''}">
+      ${i===0?'<span class="mvp-badge">WORKER OF THE MONTH</span>':''}
+      <div class="head">${sprite(safeIcon(w.icon),5)}<div><h3>${esc(w.name)}</h3><div class="muted">${esc(w.role)}</div></div></div>
+      ${[['Speed',w.speed],['Beer',w.coffee],['Noise',w.noise]].map(([l,v])=>`<div class="statrow"><span>${l}</span><span class="pips">${Array.from({length:10},(_,k)=>`<i class="${k<clamp(num(v),0,10)?'on':''}"></i>`).join('')}</span></div>`).join('')}
+      ${w.quote?`<p class="quote">“${esc(w.quote)}”</p>`:''}
+    </article>`).join('');
+  const photos = s.photos.length ? `<div class="photos">${s.photos.map((ph,i)=>`
+      <figure class="polaroid">
+        <img src="/_blob/${encodeURIComponent(ph.id)}" alt="${esc(ph.caption||'Renovation photo')}" loading="lazy">
+        <figcaption><span>${esc(ph.caption||'')}</span><span class="muted">${ph.date?fmtDate(ph.date):''}</span></figcaption>
+        ${canEdit?`<button class="danger" data-del="${i}" type="button">Remove</button>`:''}
+      </figure>`).join('')}</div>`
+    : `<div class="empty">${sprite('camera',5)}<p>No photos yet. The dust is too thick to see anything.${canEdit?' Add the first one below.':''}</p></div>`;
+
+  app.innerHTML = `
+    ${s.example ? `<div class="banner">${sprite('dust',3)}<span>This page is showing example content.${canEdit?' Press <b>Edit site</b> to make it yours.':' The owner will fill in the real story soon.'}</span></div>`:''}
+    ${canEdit ? `<div class="toolbar"><button type="button" id="btn-edit">Edit site</button><button type="button" class="ghost" id="btn-done" ${s.upcoming.length?'':'disabled'}>Job done! Next quest</button><span class="hint">Only you see these buttons.</span></div>`:''}
+    <section class="hud" aria-label="Progress">
+      <div class="hud-top">
+        <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+          <span class="tag">RENOVATION IN PROGRESS</span>
+          <h1>${esc(s.name||'Our House')}</h1>
+          <div class="sub">${esc(s.tagline||'')}</div>
+        </div>
+        <div class="big" aria-label="${p} percent done">${p}<small>%</small></div>
+      </div>
+      <div class="lvl">
+        <div class="walker" style="left:${clamp(p,4,96)}%">${sprite('worker',3)}</div>
+        <div class="bar" role="progressbar" aria-valuenow="${p}" aria-valuemin="0" aria-valuemax="100">${Array.from({length:20},(_,i)=>`<i class="${i<on?'on':''}"></i>`).join('')}</div>
+      </div>
+      <p class="mood">&gt; ${esc(mood(p))}</p>
+      <div class="hud-meta">
+        ${s.started?`<span>Started <b>${fmtDate(s.started)}</b></span>`:''}
+        ${days!=null&&days>=0?`<span>Day <b>${days}</b> of chaos</span>`:''}
+        ${s.target?`<span>Official finish <b>${fmtDate(s.target)}</b>${left!=null&&left>=0?` (${left} days)`:''}</span>`:''}
+        ${realistic&&p<100?`<span>Realistic finish <b>${fmtDate(realistic)}</b></span>`:''}
+      </div>
+    </section>
+
+    <section class="stats" aria-label="Site statistics">
+      <div class="stat">${sprite('beer',4)}<div><div class="v">${esc(num(st.coffees))}</div><div class="l">beers drunk</div></div></div>
+      <div class="stat">${sprite('money',4)}<div style="flex:1;min-width:0"><div class="v">${esc(budget)}%</div><div class="l">of budget used</div><div class="meter ${budget>100?'over':''}"><span style="width:${clamp(budget,0,100)}%"></span></div></div></div>
+      <div class="stat">${sprite('angry',4)}<div><div class="v">${esc(num(st.complaints))}</div><div class="l">neighbour complaints</div></div></div>
+      <div class="stat">${sprite('dust',4)}<div style="min-width:0"><div class="v" style="font-size:12px">${esc(st.dust||'LOW')}</div><div class="l">dust level</div></div></div>
+    </section>
+
+    <div class="grid2">
+      <section class="panel" aria-label="Last job done">
+        <h2>${sprite('trophy',3)} LAST JOB DONE</h2>
+        ${s.last.title ? `<div class="job">${sprite(safeIcon(s.last.icon),6)}<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><div class="t">${esc(s.last.title)}</div>${s.last.note?`<p class="muted">${esc(s.last.note)}</p>`:''}${s.last.date?`<span class="muted">${fmtDate(s.last.date)}</span>`:''}</div><span class="done-stamp">DONE</span></div>` : `<p class="muted">Nothing finished yet. Give it time.</p>`}
+      </section>
+      <section class="panel" aria-label="Coming up">
+        <h2>${sprite('hammer',3)} QUEST LOG: UP NEXT</h2>
+        ${s.upcoming.length ? `<ul class="quests">${s.upcoming.map((q,i)=>`<li class="${i===0?'first':''}">${sprite(safeIcon(q.icon),3)}<span class="q-title">${i===0?'▶ ':''}${esc(q.title)}</span><span class="q-when">${esc(q.when||'')}</span></li>`).join('')}</ul>` : `<p class="muted">No quests left. Suspicious.</p>`}
+      </section>
+    </div>
+
+    ${floorPlan(s)}
+
+    <section class="panel" aria-label="Best workers">
+      <h2>${sprite('worker',3)} HALL OF FAME</h2>
+      ${s.workers.length ? `<div class="workers">${workers}</div>` : `<p class="muted">No heroes listed yet.</p>`}
+    </section>
+
+    <section class="panel" aria-label="Photos">
+      <h2>${sprite('camera',3)} PHOTO WALL</h2>
+      ${photos}
+      ${canEdit && assetsApi ? `<div class="toolbar">
+        <label class="hint" for="ph-file" style="display:flex;flex-direction:column;gap:4px">Photo<input id="ph-file" type="file" accept="image/*"></label>
+        <label class="hint" for="ph-cap" style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:160px">Caption<input id="ph-cap" type="text" maxlength="80" placeholder="Kitchen, day 1" style="font-family:var(--body);font-size:20px;border:3px solid var(--ink);padding:4px 8px"></label>
+        <button type="button" id="btn-photo">Add photo</button></div>` : ''}
+    </section>
+
+    <section class="panel" aria-label="History">
+      <h2>${sprite('bricks',3)} SAVE POINTS</h2>
+      ${s.log.length ? `<ol class="log">${s.log.map(l=>`<li>${sprite(safeIcon(l.icon),3)}<span class="d">${fmtDate(l.date)}</span><span>${esc(l.title)}</span></li>`).join('')}</ol>` : `<p class="muted">History starts soon.</p>`}
+    </section>
+
+    <footer>NO REFUNDS · INSERT COIN TO CONTINUE<br>© THE HOUSE THAT DUST BUILT</footer>`;
+
+  bind();
+}
+
+function toast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),3200); }
+
+function buildDoc(next){
+  const reset = document.head.querySelector('style')?.textContent || '';
+  const css = document.getElementById('page-css').textContent;
+  const js = document.getElementById('app-js').textContent;
+  const json = JSON.stringify(next).replace(/</g,'\\u003c');
+  const S = 'script';
+  return '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>' + reset + '</style></head><body>'
+    + '<title>Renovation Quest</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n'
+    + '<link rel="preconnect" href="https://fonts.googleapis.com">\n<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">\n'
+    + '<style id="page-css">' + css + '</style>\n<div class="hazard"></div>\n<main class="wrap" id="app"></main>\n<div class="hazard"></div>\n'
+    + '<' + S + ' id="state" type="application/json">' + json + '</' + S + '>\n'
+    + '<' + S + ' id="app-js">' + js + '</' + S + '>'
+    + '</body></html>';
+}
+
+async function save(next, msg){
+  if (!artifactApi || busy) return;
+  busy = true; toast('Saving…');
+  try { await artifactApi.publish(buildDoc(next)); toast(msg || 'Saved'); }
+  catch(e){ busy = false; toast(e && e.code === 'conflict' ? 'Someone else saved first. Reloading.' : 'Could not save: ' + (e && (e.message||e.code) || 'unknown error')); }
+}
+
+function bind(){
+  app.querySelectorAll('[data-room]').forEach(el => {
+    const pick = () => { const k = el.dataset.room; app.querySelectorAll('[data-room]').forEach(x => x.classList.toggle('sel', x.dataset.room === k)); selRoom = k; };
+    el.addEventListener('click', pick); el.addEventListener('mouseenter', pick);
+  });
+  document.getElementById('btn-edit')?.addEventListener('click', openEditor);
+  document.getElementById('btn-done')?.addEventListener('click', () => {
+    const n = structuredClone(state); const q = n.upcoming.shift(); if (!q) return;
+    n.last = { title:q.title, note:'', date:today(), icon:q.icon };
+    n.log.unshift({ date:today(), title:q.title, icon:q.icon });
+    save(n, 'Quest complete!');
+  });
+  app.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => {
+    if (b.dataset.armed) { const n = structuredClone(state); n.photos.splice(Number(b.dataset.del),1); save(n,'Photo removed'); }
+    else { b.dataset.armed = '1'; b.textContent = 'Tap again to remove'; }
+  }));
+  document.getElementById('btn-photo')?.addEventListener('click', async (ev) => {
+    const f = document.getElementById('ph-file').files[0];
+    if (!f) { toast('Choose a photo first'); return; }
+    if (!/^image\//.test(f.type)) { toast('That file is not an image'); return; }
+    ev.target.disabled = true; toast('Uploading…');
+    try {
+      const a = await assetsApi.upload(f);
+      const n = structuredClone(state);
+      n.photos.unshift({ id:a.id, caption:document.getElementById('ph-cap').value.trim().slice(0,80), date:today() });
+      await save(n, 'Photo added');
+    } catch(e){ ev.target.disabled = false; toast('Upload failed: ' + (e && (e.message||e.code) || 'unknown error')); }
+  });
+}
+
+function openEditor(){
+  const s = state, st = s.stats;
+  const opt = sel => ICONS.map(i=>`<option value="${i}" ${i===sel?'selected':''}>${i}</option>`).join('');
+  const ov = document.createElement('div'); ov.className = 'overlay';
+  ov.innerHTML = `<form class="panel editor" id="ed-form">
+    <h2>EDIT SITE</h2>
+    <div class="row">
+      <label for="ed-name">House name<input id="ed-name" value="${esc(s.name)}"></label>
+      <label for="ed-tag">Tagline<input id="ed-tag" value="${esc(s.tagline)}"></label>
+    </div>
+    <label for="ed-pct">Percent done: <span id="ed-pct-v">${num(s.percent)}</span>%<input id="ed-pct" type="range" min="0" max="100" value="${num(s.percent)}"></label>
+    <div class="row">
+      <label for="ed-start">Started<input id="ed-start" type="date" value="${esc(s.started)}"></label>
+      <label for="ed-target">Official finish<input id="ed-target" type="date" value="${esc(s.target)}"></label>
+    </div>
+    <h3>Last job done</h3>
+    <div class="row">
+      <label for="ed-lt">What<input id="ed-lt" value="${esc(s.last.title)}"></label>
+      <label for="ed-ld">When<input id="ed-ld" type="date" value="${esc(s.last.date)}"></label>
+      <label for="ed-li">Icon<select id="ed-li">${opt(s.last.icon)}</select></label>
+    </div>
+    <label for="ed-ln">Funny note<input id="ed-ln" value="${esc(s.last.note)}"></label>
+    <label for="ed-up">Up next<textarea id="ed-up">${esc(s.upcoming.map(q=>[q.title,q.when,q.icon].join(' | ')).join('\n'))}</textarea>
+      <span class="hint">One job per line: job | when | icon</span></label>
+    <label for="ed-wk">Best workers<textarea id="ed-wk">${esc(s.workers.map(w=>[w.name,w.role,w.quote,w.speed,w.coffee,w.noise,w.icon].join(' | ')).join('\n'))}</textarea>
+      <span class="hint">One per line: name | role | quote | speed 0-10 | beer 0-10 | noise 0-10 | icon (worker, worker2, cat, car). The first one is Worker of the Month.</span></label>
+    <label for="ed-log">Save points (history)<textarea id="ed-log">${esc(s.log.map(l=>[l.date,l.title,l.icon].join(' | ')).join('\n'))}</textarea>
+      <span class="hint">One per line: YYYY-MM-DD | what happened | icon</span></label>
+    <h3>Rooms on the map</h3>
+    ${s.rooms.map(r=>`<div class="room-ed">
+      <label for="ed-rn-${r.key}">${ROOM_GEO[r.key].area.toFixed(2)} m²<input id="ed-rn-${r.key}" value="${esc(r.name)}" maxlength="30"></label>
+      <label for="ed-rs-${r.key}">Status<select id="ed-rs-${r.key}">${Object.keys(STATUS).map(k=>`<option value="${k}" ${k===r.status?'selected':''}>${STATUS[k].toLowerCase()}</option>`).join('')}</select></label>
+      <label for="ed-ro-${r.key}">Note<input id="ed-ro-${r.key}" value="${esc(r.note)}" maxlength="80"></label>
+    </div>`).join('')}
+    <div class="row">
+      <label for="ed-cof">Beers<input id="ed-cof" type="number" min="0" value="${num(st.coffees)}"></label>
+      <label for="ed-bud">Budget used %<input id="ed-bud" type="number" min="0" value="${num(st.budget)}"></label>
+      <label for="ed-com">Complaints<input id="ed-com" type="number" min="0" value="${num(st.complaints)}"></label>
+      <label for="ed-dust">Dust level<input id="ed-dust" value="${esc(st.dust)}"></label>
+    </div>
+    <p class="hint">Icons: ${ICONS.join(', ')}</p>
+    <div class="toolbar"><button type="submit">Save &amp; publish</button><button type="button" class="ghost" id="ed-cancel">Cancel</button></div>
+  </form>`;
+  document.body.appendChild(ov);
+  const $ = id => ov.querySelector('#'+id);
+  $('ed-pct').addEventListener('input', e => $('ed-pct-v').textContent = e.target.value);
+  $('ed-cancel').addEventListener('click', () => ov.remove());
+  const lines = id => $(id).value.split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(a=>a[0]);
+  $('ed-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const n = structuredClone(state);
+    n.example = false;
+    n.name = $('ed-name').value.trim(); n.tagline = $('ed-tag').value.trim();
+    n.percent = clamp(num($('ed-pct').value),0,100);
+    n.started = $('ed-start').value; n.target = $('ed-target').value;
+    n.last = { title:$('ed-lt').value.trim(), note:$('ed-ln').value.trim(), date:$('ed-ld').value, icon:safeIcon($('ed-li').value) };
+    n.upcoming = lines('ed-up').map(a=>({title:a[0], when:a[1]||'', icon:safeIcon(a[2])}));
+    n.workers = lines('ed-wk').map(a=>({name:a[0], role:a[1]||'', quote:a[2]||'', speed:clamp(num(a[3],5),0,10), coffee:clamp(num(a[4],5),0,10), noise:clamp(num(a[5],5),0,10), icon:safeIcon(a[6]||'worker')}));
+    n.log = $('ed-log').value.split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(a=>a.some(Boolean))
+      .map(a => a.length === 1 ? {date:'', title:a[0], icon:'hammer'} : {date:a[0], title:a[1]||'', icon:safeIcon(a[2])}).filter(l=>l.title);
+    n.rooms = n.rooms.map(r => ({ key:r.key, name:$('ed-rn-'+r.key).value.trim() || DEFAULT_NAMES[r.key], status:STATUS[$('ed-rs-'+r.key).value] ? $('ed-rs-'+r.key).value : 'todo', note:$('ed-ro-'+r.key).value.trim() }));
+    n.stats = { coffees:num($('ed-cof').value), budget:num($('ed-bud').value), complaints:num($('ed-com').value), dust:$('ed-dust').value.trim() };
+    save(n, 'Published!');
+  });
+}
+
+render();
+
+(async () => {
+  if (!window.claude?.use) return;
+  try {
+    const [user, art, assets] = await Promise.all([claude.use('user'), claude.use('artifact'), claude.use('assets')]);
+    artifactApi = art; assetsApi = assets;
+    canEdit = !!art && ((await user?.canEdit()) ?? false);
+    if (canEdit) render();
+  } catch(e) { /* read-only view */ }
+})();
+})();
+</script>
